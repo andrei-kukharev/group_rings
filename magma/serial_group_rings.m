@@ -1,73 +1,60 @@
 // Checking the seriality of group rings.
-// To run this code, use
-// http://magma.maths.usyd.edu.au/calc/
-// Проверяет групповое кольцо на полуцепность.
-// Просмотриваются неразрешимые группы с циклич. силов. подгр.
-// Диапазон значений порядка групп задается в конце файла.
+// To run this code: http://magma.maths.usyd.edu.au/calc/
 
-// Если каждый проективный модуль в списке T является цепным, 
-// то функция IsListOfUniserial возвращает true, иначе - false.
+// If each projective module in the list T is uniserial,
+// then the function IsListOfUniserial() returns True, otherwise False.
 IsListOfUniserial := function(T)
   for  i  in  [1  ..  #T]  do
     P := T[i];
-    S := P/JacobsonRadical(P); // вычисляем цоколь модуля P
-    dim := Dimension(P);  // размерность модуля P
+    S := P/JacobsonRadical(P); // socle of R
+    dim := Dimension(P);  // dim of P
 	 while (dim gt 0) do     
-      J := JacobsonRadical(P);  // радикал Джекобсона
+      J := JacobsonRadical(P);
       dim := Dimension(J);   
-      // Проверка разложимости фактор-модуля P/J в прямую сумму:  
+      // Checking the decomposability of  P/J f into a direct sum
       isdec := IsDecomposable(P/J); 
-		// Если P/J разложим, то модуль T[i] не цепной:
       if isdec then 
         return false;
       end if;		
-      P := J; // иначе переходим на следующую итерацию
+      P := J; 
     end while;	
   end for;
 return true;
 end function;
 
-// Проверка полуцепности группового кольца FG, 
-// где G - конечная группа, F - конечное поле.
+
+// Checking the seriality of the group ring FG
+// where G is a finite group, and F is a finite field.
 IsSerialGroupRing := function(G, F)
-  H := sub<G|>;	// тривиальная (единичная) подгруппа в G
-  hom := CosetAction(G, H);  //действие G на смежных классах G по H
-  G2 := hom(G);  // образ этого действия дает 
-  // перестановочное представление исходной группы G
-  M := PermutationModule(G2, F); // получаем перестановчный модуль
-  T := IndecomposableSummands(M); // разложение модуля в прямую сумму // неразложимых модулей
+  H := sub<G|>;	
+  hom := CosetAction(G, H);  
+  G2 := hom(G);  
+  M := PermutationModule(G2, F); 
+  T := IndecomposableSummands(M);
   return IsListOfUniserial(T); 
 end function;
 
-//-------------------------
 
-//---------------------
-
+// Searching serial group rings
 Test := function(n_from, n_to, k_from)
 
 	for n in [n_from .. n_to] do
-		FLn := Factorization(n);  // разложение на множители
-		// сразу пропускаем вариант 2^m
+		FLn := Factorization(n);  
 		if (#FLn eq 1) and (FLn[1][1] eq 2) then continue; end if;
 		max_k := NumberOfSmallGroups(n);
 		
 		for k in [k_from .. max_k] do
 			G := SmallGroup(n,k);
-			if IsAbelian(G) or not IsSimple(G) then	continue; end if; // абелевы гр. пропукаем
-
-			//printf "\n[%3o, %3o] %12o is Simple and NonAbelian", n, k, GroupName(G);	
-		
+			if IsAbelian(G) or not IsSimple(G) then	continue; end if; 
 			for iFL in FLn do
-				p := iFL[1];  // делитель
-				if p eq 2 then continue; end if; // пропускаем p=2				
-				P := SylowSubgroup(G,p);  // силовская p-подгр.				
-				// выход если силовская не цикл. или  группа РАЗРЕШИМА
+				p := iFL[1];  
+				if p eq 2 then continue; end if; // pass if p=2
+				P := SylowSubgroup(G,p);  
 				if not IsCyclic(P) or IsSolvable(G) then continue; end if; 
 				printf "\n[%3o, %3o] %12o, p=%2o: ", n, k, GroupName(G), p;	
 				F:=GF(p);
 				res := IsSerialGroupRing(G,F);
 				if res then printf "yes"; else printf "-"; end if;			
-
 				end for;
 		end for;
 	end for;
@@ -75,8 +62,7 @@ Test := function(n_from, n_to, k_from)
 	return 1;
 end function;
 
-
-order_start := 60;  // с групп какого порядка начинать
-order_end := 300;   // и до какого порядка
+order_start := 60; 
+order_end := 300;  
 Test(order_start, order_end, 1);
 
